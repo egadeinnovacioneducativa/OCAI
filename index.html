@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de Cultura Organizacional (Ahora vs. Deseable)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out forwards;
+        }
+        .tab-btn {
+            transition: all 0.3s ease;
+        }
+        .tab-btn.active {
+            border-color: #3b82f6;
+            background-color: #3b82f6;
+            color: white;
+            font-weight: 600;
+        }
+        .quadrant {
+            transition: all 0.3s ease;
+        }
+        .choice-input:checked + .choice-label {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+            transform: scale(1.05);
+        }
+        .choice-label {
+            transition: all 0.2s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app" class="w-full max-w-5xl mx-auto bg-white rounded-2xl shadow-lg p-6 md:p-8 transition-all duration-500">
+
+        <!-- Pantalla de Inicio -->
+        <div id="start-screen" class="fade-in">
+            <h1 class="text-3xl font-bold text-center text-gray-900">Test de Cultura Organizacional (OCAI)</h1>
+            <p class="mt-4 text-center text-gray-600">Este instrumento te ayudará a diagnosticar el perfil cultural de tu organización, comparando su estado <strong class="font-semibold">Actual</strong> con el <strong class="font-semibold">Deseado</strong>.</p>
+            <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                <h2 class="font-semibold text-blue-800">Instrucciones</h2>
+                <p class="mt-2 text-sm text-blue-700">En cada una de las 6 dimensiones, lee las 4 descripciones. Luego, selecciona la opción que mejor describe a tu organización en la columna <strong class="font-semibold">"Ahora"</strong> y la que consideras ideal en la columna <strong class="font-semibold">"Deseable"</strong>.</p>
+            </div>
+            <div class="mt-8 text-center">
+                <button id="start-btn" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                    Iniciar Test
+                </button>
+            </div>
+        </div>
+
+        <!-- Pantalla del Test -->
+        <div id="quiz-screen" class="hidden">
+             <div class="flex justify-between items-center mb-4">
+                <h2 id="dimension-title" class="text-xl font-bold text-gray-900"></h2>
+                <div class="w-1/2 bg-gray-200 rounded-full h-2.5 ml-4">
+                    <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                </div>
+            </div>
+            <div id="statements-container" class="mt-6"></div>
+            <div id="error-message" class="text-red-500 text-center mt-6 hidden font-semibold">Por favor, selecciona una opción en "Ahora" y una en "Deseable" para continuar.</div>
+            <div class="mt-8 text-center">
+                <button id="next-btn" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors">Siguiente Dimensión</button>
+            </div>
+        </div>
+
+        <!-- Pantalla de Resultados -->
+        <div id="results-screen" class="hidden">
+            <h1 id="results-title" class="text-3xl font-bold text-center text-gray-900">Resultados del Test</h1>
+            <div class="text-center mt-4">
+                <button id="toggle-results-btn" class="bg-gray-200 text-gray-800 font-semibold py-2 px-6 rounded-lg hover:bg-gray-300 transition-colors">Ver Perfil Deseable</button>
+            </div>
+            
+            <div class="mt-8 space-y-4" id="results-container"></div>
+
+            <div id="general-feedback-container" class="mt-8"></div>
+
+            <div class="mt-8 border-t pt-8">
+                <div id="tabs-container" class="flex flex-wrap justify-center gap-2 md:gap-4 mb-6">
+                    <button class="tab-btn border-2 border-gray-300 px-4 py-2 rounded-lg text-sm md:text-base" data-tab="liderazgo">Liderazgo y Teoría Organizacional</button>
+                    <button class="tab-btn border-2 border-gray-300 px-4 py-2 rounded-lg text-sm md:text-base" data-tab="calidad">Sistema Total de Calidad</button>
+                    <button class="tab-btn border-2 border-gray-300 px-4 py-2 rounded-lg text-sm md:text-base" data-tab="rrh">Gerencia de Recursos Humanos-Gestión del Líder</button>
+                </div>
+
+                <div id="tabs-content-container">
+                    <!-- El contenido se generará aquí -->
+                </div>
+            </div>
+
+            <div class="mt-8 text-center">
+                <button id="restart-btn" class="bg-gray-700 text-white font-bold py-3 px-8 rounded-lg hover:bg-gray-800 transition-colors shadow-md">
+                    Realizar de Nuevo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATOS DEL TEST ---
+        const dimensions = [
+             {
+                title: "Características Dominantes",
+                statements: [
+                    { text: "La organización es un lugar muy personal, como una gran familia. Las personas parecen compartir mucho de sí mismas.", type: 'clan' },
+                    { text: "La organización es un lugar muy dinámico y emprendedor. La gente está dispuesta a arriesgarse y jugársela.", type: 'adhocracia' },
+                    { text: "La organización está muy orientada a los resultados. La principal preocupación es hacer el trabajo. La gente es muy competitiva.", type: 'mercado' },
+                    { text: "La organización es un lugar muy controlado y estructurado. Los procedimientos formales generalmente gobiernan lo que la gente hace.", type: 'jerarquia' }
+                ]
+            },
+            {
+                title: "Liderazgo Organizacional",
+                statements: [
+                    { text: "El liderazgo en la organización es considerado un ejemplo de tutoría, apoyo o paternidad.", type: 'clan' },
+                    { text: "El liderazgo en la organización es considerado un ejemplo de innovación y toma de riesgos.", type: 'adhocracia' },
+                    { text: "El liderazgo en la organización es considerado un ejemplo de agresividad y enfoque en los resultados.", type: 'mercado' },
+                    { text: "El liderazgo en la organización es considerado un ejemplo de coordinación, organización o eficiencia sin complicaciones.", type: 'jerarquia' }
+                ]
+            },
+            {
+                title: "Gestión de Empleados",
+                statements: [
+                    { text: "El estilo de gestión se caracteriza por el trabajo en equipo, el consenso y la participación.", type: 'clan' },
+                    { text: "El estilo de gestión se caracteriza por la libertad individual, la innovación y la asunción de riesgos.", type: 'adhocracia' },
+                    { text: "El estilo de gestión se caracteriza por una alta exigencia, competitividad y enfoque en los logros.", type: 'mercado' },
+                    { text: "El estilo de gestión se caracteriza por la seguridad en el empleo, la conformidad, la previsibilidad y la estabilidad.", type: 'jerarquia' }
+                ]
+            },
+            {
+                title: "Cohesión Organizacional",
+                statements: [
+                    { text: "Lo que une a la organización es la lealtad y la confianza mutua. El compromiso es alto.", type: 'clan' },
+                    { text: "Lo que une a la organización es el compromiso con la innovación. Hay un énfasis en estar a la vanguardia.", type: 'adhocracia' },
+                    { text: "Lo que une a la organización es el énfasis en el logro y el cumplimiento de metas. La gente es competitiva.", type: 'mercado' },
+                    { text: "Lo que une a la organización son las reglas y políticas formales. Mantener un funcionamiento fluido es importante.", type: 'jerarquia' }
+                ]
+            },
+            {
+                title: "Énfasis Estratégico",
+                statements: [
+                    { text: "La organización enfatiza el desarrollo humano, la confianza, la apertura y la participación.", type: 'clan' },
+                    { text: "La organización enfatiza adquirir nuevos recursos y crear nuevos desafíos. Se valora buscar oportunidades.", type: 'adhocracia' },
+                    { text: "La organización enfatiza las acciones competitivas y el logro, buscando aumentar la cuota de mercado.", type: 'mercado' },
+                    { text: "La organización enfatiza la permanencia y la estabilidad. La eficiencia y el control son clave.", type: 'jerarquia' }
+                ]
+            },
+            {
+                title: "Criterios de Éxito",
+                statements: [
+                    { text: "El éxito se define por el desarrollo de los recursos humanos, el trabajo en equipo y la preocupación por las personas.", type: 'clan' },
+                    { text: "El éxito se define por tener los productos más únicos o novedosos. Es líder en innovación.", type: 'adhocracia' },
+                    { text: "El éxito se define por ganar en el mercado y superar a la competencia. El liderazgo en el mercado es clave.", type: 'mercado' },
+                    { text: "El éxito se define por la eficiencia, la entrega confiable y los bajos costos.", type: 'jerarquia' }
+                ]
+            }
+        ];
+
+        const feedback = {
+            clan: { name: 'Clan', color: 'bg-green-500', borderColor: 'border-green-500', bgColor: 'bg-green-50', textColor: 'text-green-800' },
+            adhocracia: { name: 'Adhocracia', color: 'bg-blue-500', borderColor: 'border-blue-500', bgColor: 'bg-blue-50', textColor: 'text-blue-800' },
+            mercado: { name: 'Mercado', color: 'bg-red-500', borderColor: 'border-red-500', bgColor: 'bg-red-50', textColor: 'text-red-800' },
+            jerarquia: { name: 'Jerarquía', color: 'bg-yellow-500', borderColor: 'border-yellow-500', bgColor: 'bg-yellow-50', textColor: 'text-yellow-800' }
+        };
+
+        const generalFeedback = {
+            clan: { title: 'Perfil de Clan (Colaborar)', description: 'Tu organización opera como una gran familia. Se valora la colaboración, el trabajo en equipo y el consenso. El liderazgo se enfoca en la tutoría y el desarrollo de las personas, y la cohesión se basa en la lealtad y la confianza. Es un ambiente amigable y de apoyo.' },
+            adhocracia: { title: 'Perfil de Adhocracia (Crear)', description: 'Tu organización es un lugar dinámico, emprendedor y creativo. Se fomenta la toma de riesgos, la innovación y la libertad individual. El liderazgo es visionario e inspira a estar a la vanguardia, y el éxito se define por la creación de productos y servicios únicos.' },
+            mercado: { title: 'Perfil de Mercado (Competir)', description: 'Tu organización está fuertemente orientada a los resultados y al entorno externo. Es un ambiente competitivo donde el objetivo principal es ganar y ser el mejor. El liderazgo es exigente, y el éxito se mide en términos de cuota de mercado y superación de la competencia.' },
+            jerarquia: { title: 'Perfil de Jerarquía (Controlar)', description: 'Tu organización es un lugar formalizado y estructurado. Los procedimientos, las reglas y las políticas son fundamentales para mantener la estabilidad y la eficiencia. El liderazgo se enfoca en la coordinación, y el éxito se define por la fiabilidad y las operaciones fluidas y de bajo costo.' }
+        };
+        
+        const detailedDescriptions = {
+             liderazgo: {
+                clan: "En una organización con orientación de clan, el ambiente se siente como una gran familia. El líder no se impone, sino que actúa como facilitador y mentor, fomentando el trabajo en equipo y el apoyo mutuo. Aquí, la comunicación abierta, el compromiso y el desarrollo de las personas son los motores principales. Se cree que, al crecer juntos y participar activamente, se construye efectividad y se fortalecen los lazos que sostienen al grupo.",
+                adhocracia: "En una cultura de adhocracia predomina la creatividad y la innovación constante. Los líderes inspiran con una visión audaz, se arriesgan y buscan transformar lo que ya existe. Su forma de guiar se basa en impulsar la agilidad y aprovechar los nuevos recursos para abrir caminos antes inexplorados. La efectividad surge de esa capacidad para innovar y adaptarse rápidamente, convirtiendo cada reto en una oportunidad de creación y cambio.",
+                jerarquia: "La cultura jerárquica se caracteriza por la organización, el orden y el control. Los líderes actúan como coordinadores y monitores que aseguran que todo fluya conforme a procesos claros y bien definidos. La eficiencia, las fechas de entrega y la uniformidad son valores esenciales para garantizar resultados confiables. Se cree que la efectividad se logra mediante la disciplina y el seguimiento riguroso de reglas y procedimientos que permiten alcanzar las metas de manera consistente.",
+                mercado: "La cultura de mercado está orientada hacia la competencia y el logro de resultados. Los líderes son personas con gran impulso, que empujan al equipo a superarse constantemente, enfocándose en alcanzar metas ambiciosas y generar rentabilidad. Aquí, el éxito se mide en función de la participación en el mercado y en el cumplimiento de objetivos concretos. La efectividad se alcanza con una actitud competitiva y con el enfoque constante en satisfacer al cliente y superar a la competencia."
+            },
+            calidad: {
+                clan: "En una organización con cultura de clan, la calidad se construye a través de la gente. Se empodera a los empleados para que participen activamente, se fomenta el trabajo en equipo y se promueve el desarrollo humano. La comunicación abierta se convierte en un pilar que fortalece la confianza y el compromiso. Aquí, la mejora de la calidad no surge solo de procesos técnicos, sino del involucramiento y la motivación de las personas, que trabajan juntas hacia un mismo propósito.",
+                adhocracia: "La adhocracia impulsa la calidad desde la innovación y la creatividad. Su objetivo es sorprender y deleitar al cliente, estableciendo nuevos estándares que van más allá de lo esperado. Se busca anticipar las necesidades, mantener la mejora continua y encontrar soluciones creativas a los desafíos. En este entorno, la calidad no se limita a cumplir, sino a innovar y transformar, siempre un paso adelante frente a lo convencional.",
+                jerarquia: "La cultura jerárquica concibe la calidad como el resultado de procesos bien controlados y organizados. Se enfoca en la detección de errores, la medición precisa y el uso de herramientas sistemáticas para resolver problemas. Cada procedimiento está diseñado para garantizar uniformidad y reducir desviaciones, haciendo uso de metodologías y herramientas de calidad. Aquí, la efectividad se logra mediante disciplina, orden y un control detallado que asegura resultados consistentes.",
+                mercado: "En la cultura de mercado, la calidad se orienta a la satisfacción del cliente y al logro de resultados medibles. Se buscan estrategias para conocer las preferencias de los clientes, aumentar la productividad y crear colaboraciones externas que fortalezcan la competitividad. La calidad se convierte en una ventaja estratégica: involucra tanto a clientes como a empleados para alcanzar metas ambiciosas y mantener a la organización en una posición de liderazgo en el mercado."
+            },
+            rrh: {
+                clan: "En la cultura de clan, el área de Recursos Humanos y Gestión del Líder se convierte en la voz y defensora de los empleados. El liderazgo se orienta a escuchar y responder a las necesidades de las personas, creando un ambiente donde predomina la cohesión y el compromiso mutuo. La calidad del trabajo surge de la confianza y del sentido de pertenencia, porque cuando los colaboradores sienten que son valorados, aportan lo mejor de sí mismos. La organización progresa gracias al desarrollo humano, la comunicación abierta y los sistemas de mejora continua que refuerzan la unión del equipo.",
+                adhocracia: "En la cultura de adhocracia, Recursos Humanos-Gestión del Líder se convierte en un verdadero agente de cambio. Su rol no es mantener lo establecido, sino facilitar la transformación y abrir caminos hacia la renovación organizacional. La calidad se entiende como innovación constante: se analizan los sistemas, se identifican oportunidades de mejora y se consultan nuevas formas de hacer las cosas. Aquí, la organización prospera gracias a su agilidad y a la capacidad de reinventarse, construyendo un futuro que no se conforma con los estándares actuales.",
+                jerarquia: "En una cultura jerárquica, el papel de Recursos Humanos y la Gestión del Líder se centra en la administración especializada. Se apuesta por la precisión y la disciplina, llevando a cabo reingeniería de procesos para lograr eficiencia. La calidad se construye a partir de la mejora continua, del cumplimiento riguroso de procedimientos y de una atención al cliente estandarizada y confiable. Aquí, la organización busca asegurar que cada detalle esté bajo control, que los servicios se evalúen con criterios claros y que el orden garantice resultados consistentes.",
+                mercado: "En la cultura de mercado, Recursos Humanos-Gestión del Líder se concibe como un socio estratégico que trabaja directamente alineado con los objetivos del negocio. Su tarea no se limita a administrar personas, sino a generar impacto profundo en la rentabilidad y la competitividad. La calidad está vinculada al desempeño, al análisis financiero y estratégico, y al desarrollo de líderes que impulsen al equipo a cumplir metas ambiciosas. Aquí, la efectividad se mide en función de los resultados y del valor que la organización es capaz de aportar en el mercado."
+            }
+        };
+
+        const transitions = {
+            liderazgo: {
+                clan: {
+                    adhocracia: "Atrévete a experimentar y proponer ideas nuevas, incluso si implican riesgo. Aprovecha tu capacidad de trabajo en equipo para impulsar proyectos innovadores.",
+                    mercado: "Fija metas medibles y orientadas a resultados. Complementa tu enfoque humano con indicadores de productividad y logros que mantengan al equipo competitivo.",
+                    jerarquia: "Refuerza tu disciplina personal, organiza procesos y define roles con mayor claridad. Aprende a establecer estructuras que den soporte al trabajo colaborativo."
+                },
+                adhocracia: {
+                    clan: "Cultiva la escucha activa y la cercanía. Dedica tiempo a fortalecer vínculos personales y a construir confianza en el equipo, no solo a generar ideas.",
+                    mercado: "Define prioridades claras y traduce la innovación en ventajas competitivas. Evalúa qué propuestas generan valor real en el mercado y cómo medir su impacto.",
+                    jerarquia: "Aprende a documentar tus propuestas y a darles estructura. Implementa procesos de seguimiento y control que aseguren que la innovación se convierta en resultados sostenibles."
+                },
+                mercado: {
+                    clan: "Reconoce los logros del equipo en lo humano, no solo en lo numérico. Valora la participación y el compromiso, y fomenta un ambiente más colaborativo.",
+                    adhocracia: "Abre espacio a la creatividad y a la innovación, incluso si en el corto plazo no generan resultados inmediatos. Considera el riesgo como inversión.",
+                    jerarquia: "Equilibra tu impulso competitivo con estructuras claras y procesos estables. Así aseguras que los resultados no dependan solo del esfuerzo inmediato, sino de bases sólidas."
+                },
+                jerarquia: {
+                    clan: "Abre más espacios de diálogo y colaboración. Deja un margen de flexibilidad en los procesos para que las personas aporten y se sientan parte del desarrollo.",
+                    adhocracia: "Permítete romper reglas cuando la situación lo requiera. Da lugar a la creatividad y a soluciones poco convencionales, aunque salgan del esquema rígido.",
+                    mercado: "Conecta tus procesos con resultados visibles. Aprende a comunicar cómo la eficiencia y la disciplina ayudan a cumplir metas, ganar clientes y generar rentabilidad."
+                }
+            },
+            calidad: {
+                clan: {
+                    adhocracia: "Incorpora prácticas de innovación a tu liderazgo. Motiva a tu equipo no solo a participar, sino a atreverse a proponer ideas nuevas, incluso si no están totalmente probadas. La creatividad también construye calidad.",
+                    mercado: "Empieza a medir resultados de tu trabajo en equipo con indicadores concretos. Orienta el compromiso del grupo hacia metas que reflejen productividad, competitividad y satisfacción del cliente.",
+                    jerarquia: "Refuerza tu enfoque en procesos claros y medibles. Aprende a complementar la confianza y el compromiso humano con herramientas de calidad y metodologías que aseguren orden y consistencia."
+                },
+                adhocracia: {
+                    clan: "Complementa la innovación con cercanía y confianza. Involucra al equipo en la toma de decisiones y escucha sus ideas; no se trata solo de sorprender al cliente, sino también de cuidar a quienes lo hacen posible.",
+                    mercado: "Transforma las ideas innovadoras en propuestas que generen valor medible para el cliente. Asegúrate de que la creatividad se traduzca en productividad, competitividad y liderazgo en el mercado.",
+                    jerarquia: "Aprende a estructurar tus propuestas creativas en procesos claros. Documenta, mide y controla los cambios que propones para asegurar que la innovación se sostenga en el tiempo."
+                },
+                mercado: {
+                    clan: "Reconoce y celebra el esfuerzo humano detrás de los resultados. Genera espacios de comunicación abierta y compromiso mutuo para fortalecer la lealtad del equipo.",
+                    adhocracia: "No todo se mide en resultados inmediatos. Atrévete a apoyar proyectos creativos que impliquen riesgo, ya que estos pueden abrir nuevas oportunidades de mercado a largo plazo.",
+                    jerarquia: "Balancea tu impulso competitivo con procesos estables y confiables. Complementa tu enfoque en resultados con controles y herramientas que aseguren la calidad de manera sistemática."
+                },
+                jerarquia: {
+                    clan: "Suelta un poco el control y abre más espacios de comunicación y colaboración. Involucra a las personas no solo como ejecutores de procesos, sino como protagonistas que aportan valor humano.",
+                    adhocracia: "Da permiso a tu equipo (y a ti mismo) de romper esquemas. Permite cierta flexibilidad en los procesos para que florezcan soluciones creativas, aunque no siempre encajen en el manual.",
+                    mercado: "Aprende a conectar tus procesos y controles con objetivos de productividad y satisfacción del cliente. Demuestra cómo la disciplina puede convertirse en un diferenciador competitivo en el mercado."
+                }
+            },
+            rrh: {
+                clan: {
+                    adhocracia: "Atrévete a salir de tu zona de confort y a proponer ideas innovadoras que transformen tu entorno. Usa tu capacidad de colaboración para impulsar cambios creativos.",
+                    mercado: "Complementa tu empatía y apertura con un enfoque en resultados. Define metas claras que vinculen el bienestar del equipo con la competitividad y la productividad.",
+                    jerarquia: "Refuerza tus habilidades de organización y procesos. Aprende a estructurar la confianza y el compromiso en sistemas medibles y ordenados."
+                },
+                adhocracia: {
+                    clan: "Dedica tiempo a fortalecer la cohesión del equipo. No todo es innovación: la confianza y el compromiso también generan resultados sostenibles.",
+                    mercado: "Convierte las ideas en ventajas competitivas. Evalúa qué innovaciones generan un impacto real en los clientes y en la estrategia de negocio.",
+                    jerarquia: "Estructura tus propuestas creativas en procesos concretos. Implementa herramientas que midan y controlen los resultados de la innovación."
+                },
+                mercado: {
+                    clan: "Reconoce que detrás de cada meta alcanzada está el esfuerzo humano. Refuerza la comunicación y la cohesión del equipo.",
+                    adhocracia: "Apuesta por la innovación, incluso cuando implique riesgos. Las ideas audaces pueden abrir nuevas oportunidades de negocio.",
+                    jerarquia: "Equilibra tu enfoque competitivo con procesos sólidos. La disciplina y el orden permiten que los resultados sean sostenibles a largo plazo."
+                },
+                jerarquia: {
+                    clan: "Abre más espacios de comunicación y escucha activa. Permite que el orden y los procesos convivan con el involucramiento humano.",
+                    adhocracia: "Relájate un poco con el control y da espacio a lo inesperado. Las ideas creativas también pueden mejorar los procesos si les das cabida.",
+                    mercado: "Conecta tu eficiencia con la estrategia de negocio. Aprende a mostrar cómo el orden y la consistencia generan ventajas competitivas en el mercado."
+                }
+            }
+        };
+
+        // --- LÓGICA DEL SCRIPT ---
+        
+        let currentDimensionIndex = 0;
+        let scoresAhora = { clan: 0, adhocracia: 0, mercado: 0, jerarquia: 0 };
+        let scoresDeseable = { clan: 0, adhocracia: 0, mercado: 0, jerarquia: 0 };
+        let dominantAhora, dominantDeseable;
+        let showingAhora = true;
+
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultsScreen = document.getElementById('results-screen');
+        const startBtn = document.getElementById('start-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const toggleBtn = document.getElementById('toggle-results-btn');
+
+        function startQuiz() {
+            startScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            quizScreen.classList.add('fade-in');
+            resultsScreen.classList.add('hidden');
+            currentDimensionIndex = 0;
+            scoresAhora = { clan: 0, adhocracia: 0, mercado: 0, jerarquia: 0 };
+            scoresDeseable = { clan: 0, adhocracia: 0, mercado: 0, jerarquia: 0 };
+            showDimensionScreen();
+        }
+
+        function showDimensionScreen() {
+            const dimensionTitleEl = document.getElementById('dimension-title');
+            const statementsContainer = document.getElementById('statements-container');
+            const progressBar = document.getElementById('progress-bar');
+            document.getElementById('error-message').classList.add('hidden');
+            
+            statementsContainer.innerHTML = '';
+            
+            const dimension = dimensions[currentDimensionIndex];
+            dimensionTitleEl.textContent = `Dimensión ${currentDimensionIndex + 1} de 6: ${dimension.title}`;
+            progressBar.style.width = `${(currentDimensionIndex / dimensions.length) * 100}%`;
+
+            let tableHTML = `<div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-500">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 w-3/5">Descripción</th>
+                        <th scope="col" class="px-6 py-3 text-center">Ahora</th>
+                        <th scope="col" class="px-6 py-3 text-center">Deseable</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+            
+            dimension.statements.forEach((statement, index) => {
+                tableHTML += `
+                    <tr class="bg-white border-b hover:bg-gray-50">
+                        <td class="px-6 py-4 font-medium text-gray-900">${statement.text}</td>
+                        <td class="px-6 py-4 text-center">
+                            <input type="radio" id="ahora-${currentDimensionIndex}-${index}" name="ahora-${currentDimensionIndex}" value="${statement.type}" class="choice-input hidden">
+                            <label for="ahora-${currentDimensionIndex}-${index}" class="choice-label cursor-pointer w-8 h-8 flex items-center justify-center rounded-full border-2 border-gray-300 mx-auto"></label>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <input type="radio" id="deseable-${currentDimensionIndex}-${index}" name="deseable-${currentDimensionIndex}" value="${statement.type}" class="choice-input hidden">
+                            <label for="deseable-${currentDimensionIndex}-${index}" class="choice-label cursor-pointer w-8 h-8 flex items-center justify-center rounded-full border-2 border-gray-300 mx-auto"></label>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `</tbody></table></div>`;
+            statementsContainer.innerHTML = tableHTML;
+            statementsContainer.classList.add('fade-in');
+
+            nextBtn.textContent = (currentDimensionIndex === dimensions.length - 1) ? 'Ver Resultados' : 'Siguiente Dimensión';
+        }
+
+        function handleNext() {
+            const ahoraSelected = document.querySelector(`input[name="ahora-${currentDimensionIndex}"]:checked`);
+            const deseableSelected = document.querySelector(`input[name="deseable-${currentDimensionIndex}"]:checked`);
+
+            if (!ahoraSelected || !deseableSelected) {
+                document.getElementById('error-message').classList.remove('hidden');
+                return;
+            }
+            document.getElementById('error-message').classList.add('hidden');
+
+            scoresAhora[ahoraSelected.value]++;
+            scoresDeseable[deseableSelected.value]++;
+
+            currentDimensionIndex++;
+            if (currentDimensionIndex < dimensions.length) {
+                showDimensionScreen();
+            } else {
+                showResults();
+            }
+        }
+        
+        function getDominantCulture(scores) {
+            return Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
+        }
+
+        function renderProfileChart(scores, title) {
+            const resultsContainer = document.getElementById('results-container');
+            const generalFeedbackContainer = document.getElementById('general-feedback-container');
+            const resultsTitle = document.getElementById('results-title');
+            
+            resultsContainer.innerHTML = '';
+            resultsTitle.textContent = title;
+            const dominantCulture = getDominantCulture(scores);
+
+            Object.entries(scores).forEach(([type, score]) => {
+                const percentage = (score / dimensions.length) * 100;
+                const cultureInfo = feedback[type];
+                resultsContainer.innerHTML += `
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-semibold text-gray-700">${cultureInfo.name}</span>
+                            <span class="text-sm font-medium text-gray-600">${percentage.toFixed(0)}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-4">
+                            <div class="${cultureInfo.color} h-4 rounded-full text-center text-white text-xs font-bold" style="width: ${percentage}%">${score}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            const dominantCultureFeedback = generalFeedback[dominantCulture];
+            const dominantCultureInfo = feedback[dominantCulture];
+            generalFeedbackContainer.innerHTML = `
+                <div class="p-6 rounded-lg border-2 ${dominantCultureInfo.borderColor} ${dominantCultureInfo.bgColor} fade-in">
+                    <h2 class="text-2xl font-bold ${dominantCultureInfo.textColor}">${dominantCultureFeedback.title}</h2>
+                    <p class="mt-4 ${dominantCultureInfo.textColor}">${dominantCultureFeedback.description}</p>
+                </div>`;
+        }
+        
+        function showResults() {
+            quizScreen.classList.add('hidden');
+            resultsScreen.classList.remove('hidden');
+            resultsScreen.classList.add('fade-in');
+
+            dominantAhora = getDominantCulture(scoresAhora);
+            dominantDeseable = getDominantCulture(scoresDeseable);
+            
+            showingAhora = true;
+            renderProfileChart(scoresAhora, 'Perfil Actual (Ahora)');
+            
+            setupTabEvents();
+            document.querySelector('.tab-btn').click();
+        }
+
+        function toggleResultsView() {
+            showingAhora = !showingAhora;
+            if(showingAhora) {
+                renderProfileChart(scoresAhora, 'Perfil Actual (Ahora)');
+                toggleBtn.textContent = 'Ver Perfil Deseable';
+            } else {
+                renderProfileChart(scoresDeseable, 'Perfil Futuro (Deseable)');
+                toggleBtn.textContent = 'Ver Perfil Actual';
+            }
+        }
+
+        function renderTabContent(category) {
+            const tabsContentContainer = document.getElementById('tabs-content-container');
+            tabsContentContainer.innerHTML = '';
+
+            let quadrantsHTML = '<div class="grid grid-cols-1 md:grid-cols-2 gap-6">';
+            
+            // Cuadrante Izquierdo: AHORA
+            const ahoraInfo = feedback[dominantAhora];
+            quadrantsHTML += `
+                <div class="quadrant flex flex-col p-4 rounded-lg border-2 ${ahoraInfo.borderColor} ${ahoraInfo.bgColor}">
+                    <h3 class="font-bold text-lg ${ahoraInfo.textColor}">Perfil Actual: ${ahoraInfo.name}</h3>
+                    <p class="mt-2 text-sm ${ahoraInfo.textColor}">${detailedDescriptions[category][dominantAhora]}</p>
+                </div>`;
+
+            // Cuadrante Derecho: DESEABLE (Transición)
+            const deseableInfo = feedback[dominantDeseable];
+            let transitionContent;
+            if (dominantAhora === dominantDeseable) {
+                transitionContent = `<p class="mt-2 text-sm ${deseableInfo.textColor}">Tu perfil deseado es el mismo que tu perfil actual. El objetivo es fortalecer y consolidar estas características en la organización.</p>`;
+            } else {
+                transitionContent = `<p class="mt-2 text-sm ${deseableInfo.textColor}">${transitions[category][dominantAhora][dominantDeseable]}</p>`;
+            }
+
+            quadrantsHTML += `
+                <div class="quadrant flex flex-col p-4 rounded-lg border-2 ${deseableInfo.borderColor}">
+                    <h3 class="font-bold text-lg text-gray-800">Plan de Acción hacia: ${deseableInfo.name}</h3>
+                    ${transitionContent}
+                </div>`;
+
+            quadrantsHTML += '</div>';
+            tabsContentContainer.innerHTML = quadrantsHTML;
+        }
+        
+        function setupTabEvents() {
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    renderTabContent(button.dataset.tab);
+                });
+            });
+        }
+
+        startBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', handleNext);
+        toggleBtn.addEventListener('click', toggleResultsView);
+        restartBtn.addEventListener('click', () => location.reload());
+
+    </script>
+</body>
+</html>
+
