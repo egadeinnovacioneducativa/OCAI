@@ -38,6 +38,34 @@
         .choice-label {
             transition: all 0.2s ease-in-out;
         }
+        /* Estilos para la impresión */
+        @media print {
+            body * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            body {
+                background-color: #fff;
+                padding: 0;
+                margin: 0;
+            }
+            #app {
+                box-shadow: none;
+                border: none;
+                width: 100%;
+                max-width: 100%;
+            }
+            /* Ocultar las pantallas y botones no necesarios en el PDF */
+            #start-screen, #quiz-screen, #toggle-results-btn, .action-buttons {
+                display: none !important;
+            }
+            #results-screen {
+                display: block !important; /* Asegurar que la pantalla de resultados sea visible */
+            }
+            .quadrant {
+                page-break-inside: avoid; /* Evitar que los cuadrantes se corten entre páginas */
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen p-4">
@@ -89,7 +117,7 @@
                 <div id="tabs-container" class="flex flex-wrap justify-center gap-2 md:gap-4 mb-6">
                     <button class="tab-btn border-2 border-gray-300 px-4 py-2 rounded-lg text-sm md:text-base" data-tab="liderazgo">Liderazgo y Teoría Organizacional</button>
                     <button class="tab-btn border-2 border-gray-300 px-4 py-2 rounded-lg text-sm md:text-base" data-tab="calidad">Sistema Total de Calidad</button>
-                    <button class="tab-btn border-2 border-gray-300 px-4 py-2 rounded-lg text-sm md:text-base" data-tab="rrh">Gerencia de Recursos Humanos-Gestión del Líder</button>
+                    <button class="tab-btn border-2 border-gray-300 px-4 py-2 rounded-lg text-sm md:text-base" data-tab="rrh">Gerencia de Recursos Humanos</button>
                 </div>
 
                 <div id="tabs-content-container">
@@ -97,9 +125,12 @@
                 </div>
             </div>
 
-            <div class="mt-8 text-center">
+            <div class="mt-8 text-center action-buttons">
                 <button id="restart-btn" class="bg-gray-700 text-white font-bold py-3 px-8 rounded-lg hover:bg-gray-800 transition-colors shadow-md">
                     Realizar de Nuevo
+                </button>
+                <button id="download-btn" class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition-colors shadow-md ml-4">
+                    Descargar Resultados (PDF)
                 </button>
             </div>
         </div>
@@ -192,10 +223,10 @@
                 mercado: "En la cultura de mercado, la calidad se orienta a la satisfacción del cliente y al logro de resultados medibles. Se buscan estrategias para conocer las preferencias de los clientes, aumentar la productividad y crear colaboraciones externas que fortalezcan la competitividad. La calidad se convierte en una ventaja estratégica: involucra tanto a clientes como a empleados para alcanzar metas ambiciosas y mantener a la organización en una posición de liderazgo en el mercado."
             },
             rrh: {
-                clan: "En la cultura de clan, el área de Recursos Humanos y Gestión del Líder se convierte en la voz y defensora de los empleados. El liderazgo se orienta a escuchar y responder a las necesidades de las personas, creando un ambiente donde predomina la cohesión y el compromiso mutuo. La calidad del trabajo surge de la confianza y del sentido de pertenencia, porque cuando los colaboradores sienten que son valorados, aportan lo mejor de sí mismos. La organización progresa gracias al desarrollo humano, la comunicación abierta y los sistemas de mejora continua que refuerzan la unión del equipo.",
-                adhocracia: "En la cultura de adhocracia, Recursos Humanos-Gestión del Líder se convierte en un verdadero agente de cambio. Su rol no es mantener lo establecido, sino facilitar la transformación y abrir caminos hacia la renovación organizacional. La calidad se entiende como innovación constante: se analizan los sistemas, se identifican oportunidades de mejora y se consultan nuevas formas de hacer las cosas. Aquí, la organización prospera gracias a su agilidad y a la capacidad de reinventarse, construyendo un futuro que no se conforma con los estándares actuales.",
-                jerarquia: "En una cultura jerárquica, el papel de Recursos Humanos y la Gestión del Líder se centra en la administración especializada. Se apuesta por la precisión y la disciplina, llevando a cabo reingeniería de procesos para lograr eficiencia. La calidad se construye a partir de la mejora continua, del cumplimiento riguroso de procedimientos y de una atención al cliente estandarizada y confiable. Aquí, la organización busca asegurar que cada detalle esté bajo control, que los servicios se evalúen con criterios claros y que el orden garantice resultados consistentes.",
-                mercado: "En la cultura de mercado, Recursos Humanos-Gestión del Líder se concibe como un socio estratégico que trabaja directamente alineado con los objetivos del negocio. Su tarea no se limita a administrar personas, sino a generar impacto profundo en la rentabilidad y la competitividad. La calidad está vinculada al desempeño, al análisis financiero y estratégico, y al desarrollo de líderes que impulsen al equipo a cumplir metas ambiciosas. Aquí, la efectividad se mide en función de los resultados y del valor que la organización es capaz de aportar en el mercado."
+                clan: "En la cultura de clan, el área de Recursos Humanos se convierte en la voz y defensora de los empleados. El liderazgo se orienta a escuchar y responder a las necesidades de las personas, creando un ambiente donde predomina la cohesión y el compromiso mutuo. La calidad del trabajo surge de la confianza y del sentido de pertenencia, porque cuando los colaboradores sienten que son valorados, aportan lo mejor de sí mismos. La organización progresa gracias al desarrollo humano, la comunicación abierta y los sistemas de mejora continua que refuerzan la unión del equipo.",
+                adhocracia: "En la cultura de adhocracia, Recursos Humanos se convierte en un verdadero agente de cambio. Su rol no es mantener lo establecido, sino facilitar la transformación y abrir caminos hacia la renovación organizacional. La calidad se entiende como innovación constante: se analizan los sistemas, se identifican oportunidades de mejora y se consultan nuevas formas de hacer las cosas. Aquí, la organización prospera gracias a su agilidad y a la capacidad de reinventarse, construyendo un futuro que no se conforma con los estándares actuales.",
+                jerarquia: "En una cultura jerárquica, el papel de Recursos Humanos se centra en la administración especializada. Se apuesta por la precisión y la disciplina, llevando a cabo reingeniería de procesos para lograr eficiencia. La calidad se construye a partir de la mejora continua, del cumplimiento riguroso de procedimientos y de una atención al cliente estandarizada y confiable. Aquí, la organización busca asegurar que cada detalle esté bajo control, que los servicios se evalúen con criterios claros y que el orden garantice resultados consistentes.",
+                mercado: "En la cultura de mercado, Recursos Humanos se concibe como un socio estratégico que trabaja directamente alineado con los objetivos del negocio. Su tarea no se limita a administrar personas, sino a generar impacto profundo en la rentabilidad y la competitividad. La calidad está vinculada al desempeño, al análisis financiero y estratégico, y al desarrollo de líderes que impulsen al equipo a cumplir metas ambiciosas. Aquí, la efectividad se mide en función de los resultados y del valor que la organización es capaz de aportar en el mercado."
             }
         };
 
@@ -283,6 +314,7 @@
         const nextBtn = document.getElementById('next-btn');
         const restartBtn = document.getElementById('restart-btn');
         const toggleBtn = document.getElementById('toggle-results-btn');
+        const downloadBtn = document.getElementById('download-btn');
 
         function startQuiz() {
             startScreen.classList.add('hidden');
@@ -424,6 +456,10 @@
                 toggleBtn.textContent = 'Ver Perfil Actual';
             }
         }
+        
+        function downloadResults() {
+            window.print();
+        }
 
         function renderTabContent(category) {
             const tabsContentContainer = document.getElementById('tabs-content-container');
@@ -472,6 +508,7 @@
         startBtn.addEventListener('click', startQuiz);
         nextBtn.addEventListener('click', handleNext);
         toggleBtn.addEventListener('click', toggleResultsView);
+        downloadBtn.addEventListener('click', downloadResults);
         restartBtn.addEventListener('click', () => location.reload());
 
     </script>
